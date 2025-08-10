@@ -1,0 +1,13 @@
+site_name: Tetris Game Documentation
+site_description: Documentation for the Tetris application
+
+nav:
+  - Home: index.md
+  - Deployment Guide: deployment.md
+  - Troubleshooting: troubleshooting.md
+
+plugins:
+  - techdocs-core
+
+theme:
+  name: material

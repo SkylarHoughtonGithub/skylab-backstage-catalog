@@ -1,0 +1,71 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: tetris
+  title: Tetris Game
+  description: A classic Tetris game using avian19/tetrisv1 Docker image
+  annotations:
+    backstage.io/source-location: url:https://hub.docker.com/r/avian19/tetrisv1
+    backstage.io/techdocs-ref: dir:.
+    argocd/app-name: tetris
+    backstage.io/kubernetes-namespace: tetris-react
+  tags:
+    - game
+    - react
+    - web
+  links:
+    - url: http://tetris.skylarhoughtongithub.local
+      title: Play Tetris
+      icon: web
+    - url: https://hub.docker.com/r/avian19/tetrisv1
+      title: Docker Image
+      icon: docker
+spec:
+  type: website
+  lifecycle: development
+  owner: shoutsky
+  system: personal
+  providesApis:
+    - tetris-web-interface
+  dependsOn:
+    - resource:tetris-k8s-resources
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: tetris-web-interface
+  title: Tetris Web Interface
+  description: HTTP web interface for the Tetris game
+spec:
+  type: website
+  lifecycle: production
+  owner: skylarhoughton-team
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Tetris Game Web Interface
+      version: 1.0.0
+      description: Browser-based Tetris game
+    servers:
+      - url: http://tetris.skylarhoughtongithub.local
+    paths:
+      /:
+        get:
+          summary: Tetris game homepage
+          responses:
+            '200':
+              description: Game interface loads successfully
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: tetris-k8s-resources
+  title: Tetris Kubernetes Resources
+  description: K8s deployment, service, and ingress for Tetris app
+  annotations:
+    backstage.io/kubernetes-namespace: dev
+spec:
+  type: kubernetes-cluster
+  lifecycle: production
+  owner: skylarhoughton-team
