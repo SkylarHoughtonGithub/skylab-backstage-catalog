@@ -1,0 +1,24 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.name }}-cluster
+  title: ${{ values.name | title }} EKS Cluster
+  description: Standard EKS cluster for ${{ values.environment }} environment
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/catalog-info.yaml
+  tags:
+    - kubernetes
+    - eks
+    - ${{ values.environment }}
+    - ${{ values.clusterType }}
+  links:
+    - url: https://console.aws.amazon.com/eks/home?region=${{ values.region }}#/clusters/${{ values.name }}
+      title: AWS Console
+      icon: cloud
+spec:
+  type: kubernetes-cluster
+  lifecycle: ${{ values.environment }}
+  owner: platform-team
+  system: infrastructure
+  providesApis: []
+  consumesApis: []

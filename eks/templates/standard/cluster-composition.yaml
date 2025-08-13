@@ -1,0 +1,628 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: ${{ values.name }}-eks-cluster
+  labels:
+    provider: aws
+    cluster-type: ${{ values.clusterType }}
+    environment: ${{ values.environment }}
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: infrastructure.skylab.com/v1alpha1
+    kind: XEKSCluster
+  
+  resources:
+    # VPC
+    - name: vpc
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: VPC
+        metadata:
+          name: ${{ values.name }}-vpc
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            cidrBlock: 192.168.0.0/16
+            enableDnsHostNames: true
+            enableDnsSupport: true
+            instanceTenancy: default
+            tags:
+              - key: Name
+                value: ${{ values.name }}-vpc
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ClusterType
+                value: ${{ values.clusterType }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vpc"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.environment
+          toFieldPath: spec.forProvider.tags[1].value
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterType
+          toFieldPath: spec.forProvider.tags[2].value
+
+    # Internet Gateway
+    - name: igw
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: InternetGateway
+        metadata:
+          name: ${{ values.name }}-igw
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            vpcIdRef:
+              name: ${{ values.name }}-vpc
+            tags:
+              - key: Name
+                value: ${{ values.name }}-igw
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-igw"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.vpcIdRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vpc"
+
+    # Subnet 1 (us-east-2a)
+    - name: subnet-2a
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        metadata:
+          name: ${{ values.name }}-us-east-2a
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            availabilityZone: ${{ values.region }}a
+            cidrBlock: 192.168.10.0/24
+            vpcIdRef:
+              name: ${{ values.name }}-vpc
+            mapPublicIpOnLaunch: true
+            tags:
+              - key: Name
+                value: ${{ values.name }}-us-east-2a
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.availabilityZone
+          transforms:
+            - type: string
+              string:
+                fmt: "%sa"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-us-east-2a"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.vpcIdRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vpc"
+
+    # Subnet 2 (us-east-2c)
+    - name: subnet-2c
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        metadata:
+          name: ${{ values.name }}-us-east-2c
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            availabilityZone: ${{ values.region }}c
+            cidrBlock: 192.168.11.0/24
+            vpcIdRef:
+              name: ${{ values.name }}-vpc
+            mapPublicIpOnLaunch: true
+            tags:
+              - key: Name
+                value: ${{ values.name }}-us-east-2c
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.availabilityZone
+          transforms:
+            - type: string
+              string:
+                fmt: "%sc"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-us-east-2c"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.vpcIdRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vpc"
+
+    # Route Table
+    - name: route-table
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: RouteTable
+        metadata:
+          name: ${{ values.name }}-public-rt
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            vpcIdRef:
+              name: ${{ values.name }}-vpc
+            associations:
+              - subnetIdRef:
+                  name: ${{ values.name }}-us-east-2a
+              - subnetIdRef:
+                  name: ${{ values.name }}-us-east-2c
+            routes:
+              - destinationCidrBlock: 0.0.0.0/0
+                gatewayIdRef:
+                  name: ${{ values.name }}-igw
+            tags:
+              - key: Name
+                value: ${{ values.name }}-public-rt
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-public-rt"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.vpcIdRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vpc"
+
+    # Security Group
+    - name: security-group
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: SecurityGroup
+        metadata:
+          name: ${{ values.name }}-sg
+        spec:
+          forProvider:
+            groupName: ${{ values.name }}-sg
+            region: ${{ values.region }}
+            vpcIdRef:
+              name: ${{ values.name }}-vpc
+            description: "EKS cluster security group"
+            ingress:
+              - fromPort: -1
+                ipProtocol: "-1"
+                ipRanges:
+                  - cidrIp: 68.52.182.6/32
+                toPort: -1
+            egress:
+              - fromPort: -1
+                ipProtocol: "-1"
+                ipRanges:
+                  - cidrIp: 0.0.0.0/0
+                toPort: -1
+            tags:
+              - key: Name
+                value: ${{ values.name }}-sg
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-sg"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.groupName
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-sg"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.vpcIdRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vpc"
+
+    # EKS Cluster IAM Role
+    - name: cluster-role
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: Role
+        metadata:
+          name: ${{ values.name }}-cluster-role
+        spec:
+          forProvider:
+            assumeRolePolicyDocument: |
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "eks.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                  }
+                ]
+              }
+            tags:
+              - key: Name
+                value: ${{ values.name }}-cluster-role
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-cluster-role"
+
+    # EKS Cluster IAM Role Policy Attachment
+    - name: cluster-policy
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: RolePolicyAttachment
+        metadata:
+          name: ${{ values.name }}-cluster-policy
+        spec:
+          forProvider:
+            policyArn: arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+            roleNameRef:
+              name: ${{ values.name }}-cluster-role
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-cluster-policy"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.roleNameRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-cluster-role"
+
+    # Node Group IAM Role
+    - name: node-role
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: Role
+        metadata:
+          name: ${{ values.name }}-node-role
+        spec:
+          forProvider:
+            assumeRolePolicyDocument: |
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "ec2.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                  }
+                ]
+              }
+            tags:
+              - key: Name
+                value: ${{ values.name }}-node-role
+              - key: Environment
+                value: ${{ values.environment }}
+              - key: ManagedBy
+                value: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-node-role"
+
+    # Node Group IAM Role Policy Attachments
+    - name: worker-node-policy
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: RolePolicyAttachment
+        metadata:
+          name: ${{ values.name }}-worker-node-policy
+        spec:
+          forProvider:
+            policyArn: arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+            roleNameRef:
+              name: ${{ values.name }}-node-role
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-worker-node-policy"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.roleNameRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-node-role"
+
+    - name: cni-policy
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: RolePolicyAttachment
+        metadata:
+          name: ${{ values.name }}-cni-policy
+        spec:
+          forProvider:
+            policyArn: arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+            roleNameRef:
+              name: ${{ values.name }}-node-role
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-cni-policy"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.roleNameRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-node-role"
+
+    - name: ecr-policy
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: RolePolicyAttachment
+        metadata:
+          name: ${{ values.name }}-ecr-policy
+        spec:
+          forProvider:
+            policyArn: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+            roleNameRef:
+              name: ${{ values.name }}-node-role
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-ecr-policy"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.roleNameRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-node-role"
+
+    # EKS Cluster
+    - name: eks-cluster
+      base:
+        apiVersion: eks.aws.crossplane.io/v1beta1
+        kind: Cluster
+        metadata:
+          name: ${{ values.name }}
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            version: "1.28"
+            roleArnRef:
+              name: ${{ values.name }}-cluster-role
+            resourcesVpcConfig:
+              endpointPrivateAccess: false
+              endpointPublicAccess: true
+              securityGroupIdRefs:
+                - name: ${{ values.name }}-sg
+              subnetIdRefs:
+                - name: ${{ values.name }}-us-east-2a
+                - name: ${{ values.name }}-us-east-2c
+            tags:
+              Name: ${{ values.name }}
+              Environment: ${{ values.environment }}
+              ClusterType: ${{ values.clusterType }}
+              ManagedBy: crossplane
+          providerConfigRef:
+            name: default
+          writeConnectionSecretToRef:
+            name: ${{ values.name }}-conn
+            namespace: crossplane-system
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.kubernetesVersion
+          toFieldPath: spec.forProvider.version
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.environment
+          toFieldPath: spec.forProvider.tags.Environment
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterType
+          toFieldPath: spec.forProvider.tags.ClusterType
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-conn"
+
+    # EKS Node Group
+    - name: nodegroup
+      base:
+        apiVersion: eks.aws.crossplane.io/v1alpha1
+        kind: NodeGroup
+        metadata:
+          name: ${{ values.name }}-nodegroup
+        spec:
+          forProvider:
+            region: ${{ values.region }}
+            clusterNameRef:
+              name: ${{ values.name }}
+            nodeRoleRef:
+              name: ${{ values.name }}-node-role
+            subnetRefs:
+              - name: ${{ values.name }}-us-east-2a
+              - name: ${{ values.name }}-us-east-2c
+            scalingConfig:
+              desiredSize: ${{ values.nodeCount }}
+              maxSize: ${{ values.nodeCount }}
+              minSize: 1
+            instanceTypes:
+              - ${{ values.nodeSize }}
+            tags:
+              Name: ${{ values.name }}-nodegroup
+              Environment: ${{ values.environment }}
+              ClusterType: ${{ values.clusterType }}
+              ManagedBy: crossplane
+          providerConfigRef:
+            name: default
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-nodegroup"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.clusterNameRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.nodeRoleRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-node-role"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.nodeCount
+          toFieldPath: spec.forProvider.scalingConfig.desiredSize
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.nodeCount
+          toFieldPath: spec.forProvider.scalingConfig.maxSize
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.nodeSize
+          toFieldPath: spec.forProvider.instanceTypes[0]
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.environment
+          toFieldPath: spec.forProvider.tags.Environment
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterType
+          toFieldPath: spec.forProvider.tags.ClusterType

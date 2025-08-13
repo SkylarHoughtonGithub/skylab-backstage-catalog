@@ -1,0 +1,120 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: eks-cluster-crossplane
+  title: Kubernetes Cluster with Crossplane
+  description: Create a new Kubernetes cluster using Crossplane
+  tags:
+    - kubernetes
+    - crossplane
+    - infrastructure
+spec:
+  owner: platform-team
+  type: infrastructure
+  parameters:
+    - title: Cluster Configuration
+      required:
+        - name
+        - environment
+        - clusterType
+      properties:
+        name:
+          title: Cluster Name
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          description: Name for your cluster (lowercase, numbers, hyphens only)
+        environment:
+          title: Environment
+          type: string
+          enum:
+            - dev
+            - staging
+            - prod
+          description: Target environment for the cluster
+        clusterType:
+          title: Cluster Type
+          type: string
+          enum:
+            - standard
+            - gpu-enabled
+            - cost-optimized
+            - high-availability
+          description: Type of cluster configuration to deploy
+
+    - title: Optional Settings
+      properties:
+        region:
+          title: AWS Region
+          type: string
+          default: us-east-2
+        nodeCount:
+          title: Node Count
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 10
+        nodeSize:
+          title: Node Instance Type
+          type: string
+          default: t3.medium
+          enum:
+            - t3.medium
+
+  steps:
+    - id: fetch-cluster-template
+      name: Fetch Cluster Template
+      action: fetch:template
+      input:
+        url: ./templates/${{ parameters.clusterType }}
+        values:
+          name: ${{ parameters.name }}
+          environment: ${{ parameters.environment }}
+          clusterType: ${{ parameters.clusterType }}
+          region: ${{ parameters.region }}
+          nodeCount: ${{ parameters.nodeCount }}
+          nodeSize: ${{ parameters.nodeSize }}
+
+    - id: publish-pr
+      name: Create Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=SkylarHoughtonGithub&repo=skylab-backstage-configs
+        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
+        title: 'Add ${{ parameters.clusterType }} cluster: ${{ parameters.name }}'
+        description: |
+          ## New Cluster Configuration
+          
+          - **Cluster Name**: ${{ parameters.name }}
+          - **Environment**: ${{ parameters.environment }}
+          - **Type**: ${{ parameters.clusterType }}
+          - **Region**: ${{ parameters.region }}
+          - **Node Count**: ${{ parameters.nodeCount }}
+          - **Node Size**: ${{ parameters.nodeSize }}
+          
+          This PR adds a new cluster configuration to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/`
+          
+          Auto-merge is enabled at the repository level.
+        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-pr'].output.repoContentsUrl }}
+        catalogInfoPath: '/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Pull Request
+        url: ${{ steps['publish-pr'].output.remoteUrl }}
+        icon: github
+      - title: Repository
+        url: ${{ steps['publish-pr'].output.repoContentsUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+    text:
+      - title: Cluster Path
+        content: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+      - title: Branch Name
+        content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
