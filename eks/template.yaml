@@ -101,7 +101,7 @@ spec:
       name: Wait for PR to be merged
       action: debug:wait
       input:
-        seconds: 300
+        seconds: 45
 
     - id: register
       name: Register in Catalog
