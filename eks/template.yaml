@@ -74,47 +74,30 @@ spec:
           nodeCount: ${{ parameters.nodeCount }}
           nodeSize: ${{ parameters.nodeSize }}
 
-    - id: publish-pr
-      name: Create Pull Request
-      action: publish:github:pull-request
+    - id: publish
+      name: Publish to Repository
+      action: publish:github
       input:
+        description: '${{ parameters.clusterType }} cluster: ${{ parameters.name }} for ${{ parameters.environment }}'
         repoUrl: github.com?owner=SkylarHoughtonGithub&repo=skylab-backstage-configs
-        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
-        title: 'Add ${{ parameters.clusterType }} cluster: ${{ parameters.name }}'
-        description: |
-          ## New Cluster Configuration
-          
-          - **Cluster Name**: ${{ parameters.name }}
-          - **Environment**: ${{ parameters.environment }}
-          - **Type**: ${{ parameters.clusterType }}
-          - **Region**: ${{ parameters.region }}
-          - **Node Count**: ${{ parameters.nodeCount }}
-          - **Node Size**: ${{ parameters.nodeSize }}
-          
-          This PR adds a new cluster configuration to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/`
-          
-          Auto-merge is enabled at the repository level.
-        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+        defaultBranch: main
+        gitCommitMessage: 'Add ${{ parameters.clusterType }} cluster ${{ parameters.name }}'
 
     - id: register
       name: Register in Catalog
       action: catalog:register
       input:
-        repoContentsUrl: ${{ steps['publish-pr'].output.repoContentsUrl }}
-        catalogInfoPath: '/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml'
+        catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml
 
   output:
     links:
-      - title: Pull Request
-        url: ${{ steps['publish-pr'].output.remoteUrl }}
-        icon: github
       - title: Repository
-        url: ${{ steps['publish-pr'].output.repoContentsUrl }}
+        url: ${{ steps.publish.output.remoteUrl }}
       - title: Open in catalog
         icon: catalog
         entityRef: ${{ steps.register.output.entityRef }}
     text:
       - title: Cluster Path
         content: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
-      - title: Branch Name
-        content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
+      - title: Commit SHA
+        content: ${{ steps.publish.output.commitHash }}
