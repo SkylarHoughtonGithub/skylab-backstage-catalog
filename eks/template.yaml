@@ -1,3 +1,6 @@
+# Updated Template with Direct Push Approach
+
+```yaml
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
@@ -74,14 +77,31 @@ spec:
           nodeCount: ${{ parameters.nodeCount }}
           nodeSize: ${{ parameters.nodeSize }}
 
-    - id: publish
-      name: Publish to Repository
-      action: publish:github
+    - id: publish-pr
+      name: Create Pull Request
+      action: publish:github:pull-request
       input:
-        description: '${{ parameters.clusterType }} cluster: ${{ parameters.name }} for ${{ parameters.environment }}'
         repoUrl: github.com?owner=SkylarHoughtonGithub&repo=skylab-backstage-configs
-        defaultBranch: main
-        gitCommitMessage: 'Add ${{ parameters.clusterType }} cluster ${{ parameters.name }}'
+        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
+        title: 'Add ${{ parameters.clusterType }} cluster: ${{ parameters.name }}'
+        description: |
+          ## New Cluster Configuration
+          
+          - **Cluster Name**: ${{ parameters.name }}
+          - **Environment**: ${{ parameters.environment }}
+          - **Type**: ${{ parameters.clusterType }}
+          - **Region**: ${{ parameters.region }}
+          - **Node Count**: ${{ parameters.nodeCount }}
+          - **Node Size**: ${{ parameters.nodeSize }}
+          
+          This PR adds a new cluster configuration to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/`
+        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+
+    - id: wait-for-merge
+      name: Wait for PR to be merged
+      action: debug:wait
+      input:
+        seconds: 300
 
     - id: register
       name: Register in Catalog
@@ -89,15 +109,32 @@ spec:
       input:
         catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml
 
+    - id: completion-message
+      name: Cluster Creation Complete
+      action: debug:log
+      input:
+        message: |
+          EKS Cluster Definition Completed!
+          
+          Pull Request: ${{ steps['publish-pr'].output.remoteUrl }}
+          Cluster Path: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+          
+          Next Steps:
+          1. Verify the cluster appears in your Backstage catalog
+          2. Check that the PR was merged successfully for Argo to sync
+          3. Monitor Crossplane for cluster provisioning status
+
   output:
     links:
+      - title: Pull Request
+        url: ${{ steps['publish-pr'].output.remoteUrl }}
+        icon: github
       - title: Repository
-        url: ${{ steps.publish.output.remoteUrl }}
-      - title: Open in catalog
-        icon: catalog
-        entityRef: ${{ steps.register.output.entityRef }}
+        url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs
     text:
       - title: Cluster Path
         content: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
-      - title: Commit SHA
-        content: ${{ steps.publish.output.commitHash }}
+      - title: Branch Name
+        content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
+      - title: Manual Registration URL
+        content: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml
