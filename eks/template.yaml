@@ -1,6 +1,6 @@
 # Updated Template with Direct Push Approach
 
-```yaml
+---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
