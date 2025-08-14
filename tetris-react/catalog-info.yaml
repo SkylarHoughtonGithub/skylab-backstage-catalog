@@ -7,7 +7,7 @@ metadata:
   description: A classic Tetris game using avian19/tetrisv1 Docker image
   annotations:
     backstage.io/source-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-catalog/blob/main/tetris-react
-    backstage.io/techdocs-ref: dir:./tetris-react/docs
+    backstage.io/techdocs-ref: dir:./tetris-react
     argocd/app-name: tetris
     backstage.io/kubernetes-namespace: tetris-react
   tags:
