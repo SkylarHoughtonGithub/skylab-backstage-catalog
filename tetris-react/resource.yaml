@@ -9,6 +9,6 @@ metadata:
     backstage.io/kubernetes-namespace: tetris-react
     backstage.io/kubernetes-id: tetris
 spec:
-  type: kubernetes-cluster
-  lifecycle: production
-  owner: skylarhoughton-team
+  type: kubernetes-app
+  lifecycle: development
+  owner: shoutsky

@@ -7,8 +7,8 @@ metadata:
   description: HTTP web interface for the Tetris game
 spec:
   type: website
-  lifecycle: production
-  owner: skylarhoughton-team
+  lifecycle: development
+  owner: shoutsky
   definition: |
     openapi: 3.0.0
     info:

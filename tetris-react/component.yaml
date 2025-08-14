@@ -6,11 +6,12 @@ metadata:
   title: Tetris Game
   description: A classic Tetris game using avian19/tetrisv1 Docker image
   annotations:
+    argocd/app-name: argo-lab-tetris-react-dev
     backstage.io/source-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-catalog/blob/main/tetris-react
-    backstage.io/techdocs-ref: dir:./tetris-react
-    argocd/app-name: tetris
     backstage.io/kubernetes-id: tetris
     backstage.io/kubernetes-namespace: tetris-react
+    github.com/project-slug: "SkylarHoughtonGithub/skylab-backstage-catalog"
+    backstage.io/techdocs-ref: dir:./tetris-react
   tags:
     - game
     - react
@@ -26,7 +27,6 @@ spec:
   type: website
   lifecycle: development
   owner: shoutsky
-  system: personal
   providesApis:
     - tetris-web-interface
   dependsOn:
