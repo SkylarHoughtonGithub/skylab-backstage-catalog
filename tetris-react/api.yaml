@@ -1,0 +1,26 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: tetris-web-interface
+  title: Tetris Web Interface
+  description: HTTP web interface for the Tetris game
+spec:
+  type: website
+  lifecycle: production
+  owner: skylarhoughton-team
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Tetris Game Web Interface
+      version: 1.0.0
+      description: Browser-based Tetris game
+    servers:
+      - url: http://tetris.skylarhoughtongithub.local
+    paths:
+      /:
+        get:
+          summary: Tetris game homepage
+          responses:
+            '200':
+              description: Game interface loads successfully
