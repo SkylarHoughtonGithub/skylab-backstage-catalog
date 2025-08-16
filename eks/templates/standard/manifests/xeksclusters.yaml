@@ -1,0 +1,55 @@
+---
+apiVersion: infrastructure.skylab.com/v1alpha1
+kind: XEKSCluster
+metadata:
+  name: ${{ values.name }}-cluster
+  namespace: crossplane-system
+  labels:
+    environment: ${{ values.environment }}
+    cluster-type: ${{ values.clusterType }}
+    cluster-name: ${{ values.name }}
+    managed-by: backstage-template
+    template: eks-cluster-crossplane
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    template.backstage.io/created-by: ${{ values.name }}-eks-cluster-template
+spec:
+  # Core cluster configuration
+  clusterName: ${{ values.name }}
+  region: ${{ values.region }}
+  environment: ${{ values.environment }}
+  clusterType: ${{ values.clusterVariant }}
+  kubernetesVersion: "1.28"
+  
+  # Node configuration
+  nodeCount: ${{ values.nodeCount }}
+  nodeSize: ${{ values.nodeSize }}
+  
+  # Network configuration - environment-based CIDR allocation
+  {%- if values.environment == 'dev' %}
+  vpcCidr: "10.10.0.0/16"
+  subnetCidrs:
+    - "10.10.1.0/24"
+    - "10.10.2.0/24"
+  {%- elif values.environment == 'staging' %}
+  vpcCidr: "10.20.0.0/16"
+  subnetCidrs:
+    - "10.20.1.0/24"
+    - "10.20.2.0/24"
+  {%- else %}
+  vpcCidr: "10.30.0.0/16"
+  subnetCidrs:
+    - "10.30.1.0/24"
+    - "10.30.2.0/24"
+  {%- endif %}
+  
+  # Security configuration - environment-specific access
+  allowedCidrs:
+  {%- if values.environment == 'dev' %}
+    - "0.0.0.0/0"  # Dev is open for testing
+  {%- elif values.environment == 'staging' %}
+    - "10.0.0.0/8"  # Staging allows internal networks
+    - "68.52.182.6/32"  # Office IP
+  {%- else %}
+    - "68.52.182.6/32"  # Prod is restricted to office only
+  {%- endif %}
