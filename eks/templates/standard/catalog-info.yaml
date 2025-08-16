@@ -28,7 +28,7 @@ metadata:
     - url: https://console.aws.amazon.com/eks/home?region=${{ values.region }}#/clusters/${{ values.name }}
       title: AWS EKS Console
       icon: cloud
-    - url: https://argocd.skylarhoughtongithub.local/applications?search=${{ values.name }}
+    - url: https://argocd.skylarhoughtongithub.local/applications?search=${{ values.name }}-crossplane-infra-${{ values.environment }}
       title: ArgoCD Applications
       icon: dashboard
     - url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/tree/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane
