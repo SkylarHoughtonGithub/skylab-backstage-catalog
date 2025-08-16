@@ -113,7 +113,7 @@ spec:
       action: debug:wait
       input:
         seconds: 45
-        
+
     - id: register
       name: Register in Catalog
       action: catalog:register
@@ -145,7 +145,7 @@ spec:
         url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs
         icon: catalog
       - title: ArgoCD Application
-        url: https://argocd.skylab.com/applications?search=${{ values.name }}
+        url: https://argocd.skylarhoughtongithub.local/applications?search=${{ values.name }}
         icon: dashboard
     text:
       - title: Cluster Path
