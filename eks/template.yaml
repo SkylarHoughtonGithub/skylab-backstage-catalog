@@ -144,8 +144,8 @@ spec:
       - title: Repository
         url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs
         icon: catalog
-      - title: ArgoCD Application
-        url: https://argocd.skylarhoughtongithub.local/applications?search=${{ values.name }}-crossplane-infra-${{ values.environment }}
+      - title: ArgoCD 
+        url: https://argocd.skylarhoughtongithub.local
         icon: dashboard
     text:
       - title: Cluster Path
