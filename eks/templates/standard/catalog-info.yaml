@@ -1,24 +1,44 @@
+---
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: ${{ values.name }}-cluster
-  title: ${{ values.name | title }} EKS Cluster
-  description: Standard EKS cluster for ${{ values.environment }} environment
+  name: ${{ values.name }}-${{ values.clusterType }}-cluster
+  title: ${{ values.name | title }} EKS Cluster (Crossplane)
+  description: ${{ values.clusterVariant | title }} EKS cluster for ${{ values.environment }} environment managed by Crossplane
   annotations:
-    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/catalog-info.yaml
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    backstage.io/techdocs-ref: dir:./infra/crossplane
+    argocd/app-name: ${{ values.name }}-crossplane-infra-${{ values.environment }}
+    crossplane.io/composite-resource: ${{ values.name }}-eks-cluster
   tags:
     - kubernetes
     - eks
+    - crossplane
+    - infrastructure
     - ${{ values.environment }}
     - ${{ values.clusterType }}
+    - ${{ values.clusterVariant }}
+  labels:
+    environment: ${{ values.environment }}
+    cluster-type: ${{ values.clusterType }}
+    cluster-name: ${{ values.name }}
+    layer: infra
+    component: crossplane
   links:
     - url: https://console.aws.amazon.com/eks/home?region=${{ values.region }}#/clusters/${{ values.name }}
-      title: AWS Console
+      title: AWS EKS Console
       icon: cloud
+    - url: https://argocd.skylab.com/applications?search=${{ values.name }}
+      title: ArgoCD Applications
+      icon: dashboard
+    - url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/tree/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane
+      title: Source Code
+      icon: github
 spec:
   type: kubernetes-cluster
   lifecycle: ${{ values.environment }}
   owner: platform-team
   system: infrastructure
+  dependsOn: []
   providesApis: []
   consumesApis: []

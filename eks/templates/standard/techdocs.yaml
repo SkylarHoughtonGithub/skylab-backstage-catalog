@@ -1,0 +1,18 @@
+---
+site_name: '${{ values.name | title }} EKS Cluster'
+site_description: 'Documentation for ${{ values.name }} EKS cluster infrastructure'
+
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Operations: operations.md
+  - Troubleshooting: troubleshooting.md
+
+plugins:
+  - techdocs-core
+
+theme:
+  name: material
+  palette:
+    primary: green
+    accent: black

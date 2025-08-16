@@ -1,5 +1,3 @@
-# Updated Template with Direct Push Approach
-
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
@@ -38,10 +36,19 @@ spec:
           title: Cluster Type
           type: string
           enum:
+            - eks
+            - gke
+            - aks
+          description: Kubernetes platform type
+        clusterVariant:
+          title: Cluster Variant
+          type: string
+          enum:
             - standard
             - gpu-enabled
             - cost-optimized
             - high-availability
+          default: standard
           description: Type of cluster configuration to deploy
 
     - title: Optional Settings
@@ -68,11 +75,12 @@ spec:
       name: Fetch Cluster Template
       action: fetch:template
       input:
-        url: ./templates/${{ parameters.clusterType }}
+        url: ./templates/${{ parameters.clusterVariant }}
         values:
           name: ${{ parameters.name }}
           environment: ${{ parameters.environment }}
           clusterType: ${{ parameters.clusterType }}
+          clusterVariant: ${{ parameters.clusterVariant }}
           region: ${{ parameters.region }}
           nodeCount: ${{ parameters.nodeCount }}
           nodeSize: ${{ parameters.nodeSize }}
@@ -82,47 +90,45 @@ spec:
       action: publish:github:pull-request
       input:
         repoUrl: github.com?owner=SkylarHoughtonGithub&repo=skylab-backstage-configs
-        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
-        title: 'Add ${{ parameters.clusterType }} cluster: ${{ parameters.name }}'
+        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}-infra
+        title: 'Add ${{ parameters.clusterVariant }} EKS cluster: ${{ parameters.name }}'
         description: |
-          ## New Cluster Configuration
+          ## New EKS Cluster Infrastructure
           
           - **Cluster Name**: ${{ parameters.name }}
           - **Environment**: ${{ parameters.environment }}
-          - **Type**: ${{ parameters.clusterType }}
+          - **Cluster Type**: ${{ parameters.clusterType }}
+          - **Variant**: ${{ parameters.clusterVariant }}
           - **Region**: ${{ parameters.region }}
           - **Node Count**: ${{ parameters.nodeCount }}
           - **Node Size**: ${{ parameters.nodeSize }}
           
-          This PR adds a new cluster configuration to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/`
-        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
-
-    - id: wait-for-merge
-      name: Wait for PR to be merged
-      action: debug:wait
-      input:
-        seconds: 45
+          This PR adds new cluster infrastructure to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/`
+          
+          The cluster will be managed by Crossplane and deployed via ArgoCD ApplicationSet.
+        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
 
     - id: register
       name: Register in Catalog
       action: catalog:register
       input:
-        catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml
+        catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/catalog-info.yaml
 
     - id: completion-message
       name: Cluster Creation Complete
       action: debug:log
       input:
         message: |
-          EKS Cluster Definition Completed!
+          EKS Cluster Infrastructure Created!
           
           Pull Request: ${{ steps['publish-pr'].output.remoteUrl }}
-          Cluster Path: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+          Cluster Path: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
           
           Next Steps:
-          1. Verify the cluster appears in your Backstage catalog
-          2. Check that the PR was merged successfully for Argo to sync
-          3. Monitor Crossplane for cluster provisioning status
+          1. Review and merge the pull request
+          2. Verify the cluster appears in your Backstage catalog
+          3. Monitor ArgoCD for sync status
+          4. Check Crossplane for cluster provisioning status
 
   output:
     links:
@@ -131,10 +137,14 @@ spec:
         icon: github
       - title: Repository
         url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs
+        icon: catalog
+      - title: ArgoCD Application
+        url: https://argocd.skylab.com/applications?search=${{ values.name }}
+        icon: dashboard
     text:
       - title: Cluster Path
-        content: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}
+        content: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
       - title: Branch Name
-        content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}
-      - title: Manual Registration URL
-        content: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/catalog-info.yaml
+        content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}-infra
+      - title: Expected Application Name
+        content: cluster-name-crossplane-infra-${{ parameters.environment }}
