@@ -108,6 +108,12 @@ spec:
           The cluster will be managed by Crossplane and deployed via ArgoCD ApplicationSet.
         targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
 
+    - id: wait-for-merge
+      name: Wait for PR to be merged
+      action: debug:wait
+      input:
+        seconds: 45
+        
     - id: register
       name: Register in Catalog
       action: catalog:register
