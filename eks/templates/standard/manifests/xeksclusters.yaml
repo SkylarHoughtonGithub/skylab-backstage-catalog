@@ -3,7 +3,7 @@ apiVersion: infrastructure.skylab.com/v1alpha1
 kind: XEKSCluster
 metadata:
   name: ${{ values.name }}-cluster
-  namespace: crossplane-system
+  namespace: crossplane-${{ values.name }}
   labels:
     environment: ${{ values.environment }}
     cluster-type: ${{ values.clusterType }}
