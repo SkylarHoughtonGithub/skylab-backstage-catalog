@@ -15,7 +15,7 @@ metadata:
     template.backstage.io/created-by: ${{ values.name }}-eks-cluster-template
 spec:
   # Core cluster configuration
-  clusterName: ${{ values.name }}
+  clusterName: ${{ values.name }}-${{ values.environment }}
   region: ${{ values.region }}
   environment: ${{ values.environment }}
   clusterType: ${{ values.clusterVariant }}
@@ -63,7 +63,7 @@ spec:
     readOnlyAccessEntryType1: "${{ values.readOnlyAccessEntryType1 }}"
     readOnlyAccessEntryName2: "${{ values.readOnlyAccessEntryName2 }}"
     readOnlyAccessEntryType2: "${{ values.readOnlyAccessEntryType2 }}"
-    
+
   {%- if values.adminAccessEntryName1 or values.adminAccessEntryName2 %}
   adminPrincipals:
     {%- if values.adminAccessEntryName1 %}
