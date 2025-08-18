@@ -54,32 +54,30 @@ spec:
     - "68.52.182.6/32"  # Prod is restricted to office only
   {%- endif %}
 
-  {%- set adminEntries = [] %}
   {%- if values.adminAccessEntryName1 %}
-    {%- set _ = adminEntries.append({"name": values.adminAccessEntryName1, "type": values.adminAccessEntryType1}) %}
-  {%- endif %}
-  {%- if values.adminAccessEntryName2 %}
-    {%- set _ = adminEntries.append({"name": values.adminAccessEntryName2, "type": values.adminAccessEntryType2}) %}
-  {%- endif %}
-  {%- if adminEntries %}
   adminPrincipals:
-  {%- for entry in adminEntries %}
-    - name: {{ entry.name }}
-      type: {{ entry.type }}
-  {%- endfor %}
+    - name: ${{ values.adminAccessEntryName1 }}
+      type: ${{ values.adminAccessEntryType1 }}
   {%- endif %}
 
-  {%- set readonlyEntries = [] %}
+  {%- if values.adminAccessEntryName2 %}
+  adminPrincipals:
+    - name: ${{ values.adminAccessEntryName1 }}
+      type: ${{ values.adminAccessEntryType1 }}
+    - name: ${{ values.adminAccessEntryName2 }}
+      type: ${{ values.adminAccessEntryType2 }}
+  {%- endif %}
+
   {%- if values.readOnlyAccessEntryName1 %}
-    {%- set _ = readonlyEntries.append({"name": values.readOnlyAccessEntryName1, "type": values.readOnlyAccessEntryType1}) %}
-  {%- endif %}
-  {%- if values.readOnlyAccessEntryName2 %}
-    {%- set _ = readonlyEntries.append({"name": values.readOnlyAccessEntryName2, "type": values.readOnlyAccessEntryType2}) %}
-  {%- endif %}
-  {%- if readonlyEntries %}
   readonlyPrincipals:
-  {%- for entry in readonlyEntries %}
-    - name: {{ entry.name }}
-      type: {{ entry.type }}
-  {%- endfor %}
+    - name: ${{ values.readOnlyAccessEntryName1 }}
+      type: ${{ values.readOnlyAccessEntryType1 }}
+  {%- endif %}
+
+  {%- if values.readOnlyAccessEntryName2 %}
+  readonlyPrincipals:
+    - name: ${{ values.readOnlyAccessEntryName1 }}
+      type: ${{ values.readOnlyAccessEntryType1 }}
+    - name: ${{ values.readOnlyAccessEntryName2 }}
+      type: ${{ values.readOnlyAccessEntryType2 }}
   {%- endif %}
