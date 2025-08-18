@@ -37,8 +37,6 @@ spec:
           type: string
           enum:
             - eks
-            - gke
-            - aks
           description: Kubernetes platform type
         clusterVariant:
           title: Cluster Variant
@@ -136,6 +134,14 @@ spec:
           region: ${{ parameters.region }}
           nodeCount: ${{ parameters.nodeCount }}
           nodeSize: ${{ parameters.nodeSize }}
+          adminAccessEntryName1: ${{ parameters.adminAccessEntryName1 }}
+          adminAccessEntryType1: ${{ parameters.adminAccessEntryType1 }}
+          adminAccessEntryName2: ${{ parameters.adminAccessEntryName2 }}
+          adminAccessEntryType2: ${{ parameters.adminAccessEntryType2 }}
+          readOnlyAccessEntryName1: ${{ parameters.readOnlyAccessEntryName1 }}
+          readOnlyAccessEntryType1: ${{ parameters.readOnlyAccessEntryType1 }}
+          readOnlyAccessEntryName2: ${{ parameters.readOnlyAccessEntryName2 }}
+          readOnlyAccessEntryType2: ${{ parameters.readOnlyAccessEntryType2 }}
 
     - id: publish-pr
       name: Create Pull Request
