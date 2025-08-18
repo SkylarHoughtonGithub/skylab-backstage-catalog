@@ -54,16 +54,6 @@ spec:
     - "68.52.182.6/32"  # Prod is restricted to office only
   {%- endif %}
 
-  debugValues:
-    adminAccessEntryName1: "${{ values.adminAccessEntryName1 }}"
-    adminAccessEntryType1: "${{ values.adminAccessEntryType1 }}"
-    adminAccessEntryName2: "${{ values.adminAccessEntryName2 }}"
-    adminAccessEntryType2: "${{ values.adminAccessEntryType2 }}"
-    readOnlyAccessEntryName1: "${{ values.readOnlyAccessEntryName1 }}"
-    readOnlyAccessEntryType1: "${{ values.readOnlyAccessEntryType1 }}"
-    readOnlyAccessEntryName2: "${{ values.readOnlyAccessEntryName2 }}"
-    readOnlyAccessEntryType2: "${{ values.readOnlyAccessEntryType2 }}"
-
   {%- if values.adminAccessEntryName1 or values.adminAccessEntryName2 %}
   adminPrincipals:
     {%- if values.adminAccessEntryName1 %}
