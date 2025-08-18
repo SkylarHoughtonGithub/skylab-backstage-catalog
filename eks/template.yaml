@@ -69,6 +69,58 @@ spec:
           default: t3.medium
           enum:
             - t3.medium
+    - title: Admin Access Configuration
+      description: Configure IAM principals that will have admin access to the EKS cluster
+      properties:
+        adminAccessEntryName1:
+          title: Primary Admin Principal Name
+          type: string
+          description: "Name of IAM user or role (e.g., 'MyAdminRole' or 'john.doe')"
+          default: chicken
+        adminAccessEntryType1:
+          title: Primary Admin Principal Type
+          type: string
+          enum:
+            - role
+            - user
+          default: user
+        adminAccessEntryName2:
+          title: Secondary Admin Principal Name (Optional)
+          type: string
+          description: "Name of additional IAM user or role for admin access"
+        adminAccessEntryType2:
+          title: Secondary Admin Principal Type
+          type: string
+          enum:
+            - role
+            - user
+          default: role
+          
+    - title: Read-Only Access Configuration
+      description: Configure IAM principals that will have read-only access to the EKS cluster
+      properties:
+        readOnlyAccessEntryName1:
+          title: Primary Read-Only Principal Name (Optional)
+          type: string
+          description: "Name of IAM user or role for read-only access"
+        readOnlyAccessEntryType1:
+          title: Primary Read-Only Principal Type
+          type: string
+          enum:
+            - role
+            - user
+          default: role
+        readOnlyAccessEntryName2:
+          title: Secondary Read-Only Principal Name (Optional)
+          type: string
+          description: "Name of additional IAM user or role for read-only access"
+        readOnlyAccessEntryType2:
+          title: Secondary Read-Only Principal Type
+          type: string
+          enum:
+            - role
+            - user
+          default: role
 
   steps:
     - id: fetch-cluster-template
