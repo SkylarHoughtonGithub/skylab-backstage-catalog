@@ -54,12 +54,3 @@ spec:
       {{ key }}: "{{ value }}"
       {%- endfor %}
     {%- endif %}
-  
-  # EKS Add-ons
-  addons:
-    vpcCni:
-      version: "${{ values.vpcCniVersion }}"
-    coreDns:
-      version: "${{ values.coreDnsVersion }}"
-    kubeProxy:
-      version: "${{ values.kubeProxyVersion }}"
