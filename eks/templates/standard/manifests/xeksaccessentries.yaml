@@ -1,0 +1,82 @@
+{%- if values.adminAccessEntryName1 or values.adminAccessEntryName2 or values.readOnlyAccessEntryName1 or values.readOnlyAccessEntryName2 or values.developerAccessEntryName1 or values.developerAccessEntryName2 %}
+---
+apiVersion: infrastructure.skylab.com/v1alpha1
+kind: XEKSAccessEntries
+metadata:
+  name: ${{ values.name }}-access
+  namespace: crossplane-${{ values.name }}
+  labels:
+    environment: ${{ values.environment }}
+    cluster-type: ${{ values.clusterType }}
+    cluster-name: ${{ values.name }}
+    managed-by: backstage-template
+    template: eks-cluster-crossplane
+    component: access
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    template.backstage.io/created-by: ${{ values.name }}-eks-cluster-template
+spec:
+  clusterName: ${{ values.name }}-${{ values.environment }}
+  region: ${{ values.region }}
+  awsAccountId: "${{ values.awsAccountId | default('635314249418') }}"
+  
+  {%- if values.adminAccessEntryName1 or values.adminAccessEntryName2 %}
+  adminPrincipals:
+    {%- if values.adminAccessEntryName1 %}
+    - name: ${{ values.adminAccessEntryName1 }}
+      type: ${{ values.adminAccessEntryType1 | default('role') }}
+      kubernetesGroups: ["system:masters"]
+    {%- endif %}
+    {%- if values.adminAccessEntryName2 %}
+    - name: ${{ values.adminAccessEntryName2 }}
+      type: ${{ values.adminAccessEntryType2 | default('role') }}
+      kubernetesGroups: ["system:masters"]
+    {%- endif %}
+  {%- endif %}
+
+  {%- if values.developerAccessEntryName1 or values.developerAccessEntryName2 %}
+  developerPrincipals:
+    {%- if values.developerAccessEntryName1 %}
+    - name: ${{ values.developerAccessEntryName1 }}
+      type: ${{ values.developerAccessEntryType1 | default('role') }}
+      kubernetesGroups: ["developers"]
+      accessPolicies:
+        - policyArn: "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+          accessScope:
+            type: namespace
+            namespaces: ["${{ values.environment }}", "default"]
+    {%- endif %}
+    {%- if values.developerAccessEntryName2 %}
+    - name: ${{ values.developerAccessEntryName2 }}
+      type: ${{ values.developerAccessEntryType2 | default('role') }}
+      kubernetesGroups: ["developers"]
+      accessPolicies:
+        - policyArn: "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+          accessScope:
+            type: namespace
+            namespaces: ["${{ values.environment }}", "default"]
+    {%- endif %}
+  {%- endif %}
+
+  {%- if values.readOnlyAccessEntryName1 or values.readOnlyAccessEntryName2 %}
+  readonlyPrincipals:
+    {%- if values.readOnlyAccessEntryName1 %}
+    - name: ${{ values.readOnlyAccessEntryName1 }}
+      type: ${{ values.readOnlyAccessEntryType1 | default('role') }}
+      kubernetesGroups: ["viewers"]
+      accessPolicies:
+        - policyArn: "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+          accessScope:
+            type: cluster
+    {%- endif %}
+    {%- if values.readOnlyAccessEntryName2 %}
+    - name: ${{ values.readOnlyAccessEntryName2 }}
+      type: ${{ values.readOnlyAccessEntryType2 | default('role') }}
+      kubernetesGroups: ["viewers"]
+      accessPolicies:
+        - policyArn: "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+          accessScope:
+            type: cluster
+    {%- endif %}
+  {%- endif %}
+{%- endif %}

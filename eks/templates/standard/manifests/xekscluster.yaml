@@ -1,0 +1,74 @@
+
+---
+apiVersion: infrastructure.skylab.com/v1alpha1
+kind: XEKSCluster
+metadata:
+  name: ${{ values.name }}-cluster
+  namespace: crossplane-${{ values.name }}
+  labels:
+    environment: ${{ values.environment }}
+    cluster-type: ${{ values.clusterType }}
+    cluster-name: ${{ values.name }}
+    managed-by: backstage-template
+    template: eks-cluster-crossplane
+    component: cluster
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    template.backstage.io/created-by: ${{ values.name }}-eks-cluster-template
+spec:
+  clusterName: ${{ values.name }}-${{ values.environment }}
+  region: ${{ values.region }}
+  environment: ${{ values.environment }}
+  clusterType: ${{ values.clusterVariant }}
+  kubernetesVersion: "1.33"
+  
+  # References to other compositions
+  networkName: ${{ values.name }}-${{ values.environment }}
+  rbacName: ${{ values.name }}-${{ values.environment }}
+  
+  # Endpoint access configuration
+  endpointAccess:
+    private: ${{ values.endpointPrivateAccess | default(false) }}
+    public: ${{ values.endpointPublicAccess | default(true) }}
+    {%- if values.environment == 'dev' %}
+    publicAccessCidrs: ["0.0.0.0/0"]
+    {%- elif values.environment == 'staging' %}
+    publicAccessCidrs: ["10.0.0.0/8", "68.52.182.6/32"]
+    {%- else %}
+    publicAccessCidrs: ["68.52.182.6/32"]
+    {%- endif %}
+  
+  # Node group configuration
+  nodeGroup:
+    desiredSize: ${{ values.nodeCount | default(1) }}
+    minSize: ${{ values.nodeMinSize | default(1) }}
+    maxSize: ${{ values.nodeMaxSize | default(3) }}
+    instanceTypes: 
+      - ${{ values.nodeSize | default('t3.medium') }}
+    capacityType: ${{ values.capacityType | default('ON_DEMAND') }}
+    amiType: ${{ values.amiType | default('AL2_x86_64') }}
+    diskSize: ${{ values.diskSize | default(20) }}
+    {%- if values.nodeLabels %}
+    labels:
+      {%- for key, value in values.nodeLabels.items() %}
+      {{ key }}: "{{ value }}"
+      {%- endfor %}
+    {%- endif %}
+  
+  # EKS Add-ons
+  addons:
+    vpcCni:
+      enabled: ${{ values.vpcCniEnabled | default(true) }}
+      {%- if values.vpcCniVersion %}
+      version: "${{ values.vpcCniVersion }}"
+      {%- endif %}
+    coreDns:
+      enabled: ${{ values.coreDnsEnabled | default(true) }}
+      {%- if values.coreDnsVersion %}
+      version: "${{ values.coreDnsVersion }}"
+      {%- endif %}
+    kubeProxy:
+      enabled: ${{ values.kubeProxyEnabled | default(true) }}
+      {%- if values.kubeProxyVersion %}
+      version: "${{ values.kubeProxyVersion }}"
+      {%- endif %}

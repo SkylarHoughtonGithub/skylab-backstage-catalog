@@ -1,0 +1,22 @@
+
+
+---
+apiVersion: infrastructure.skylab.com/v1alpha1
+kind: XClusterRBAC
+metadata:
+  name: ${{ values.name }}-rbac
+  namespace: crossplane-${{ values.name }}
+  labels:
+    environment: ${{ values.environment }}
+    cluster-type: ${{ values.clusterType }}
+    cluster-name: ${{ values.name }}
+    managed-by: backstage-template
+    template: eks-cluster-crossplane
+    component: rbac
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    template.backstage.io/created-by: ${{ values.name }}-eks-cluster-template
+spec:
+  clusterName: ${{ values.name }}-${{ values.environment }}
+  environment: ${{ values.environment }}
+  includeEbsCsiPolicy: true

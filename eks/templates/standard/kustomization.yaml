@@ -6,7 +6,10 @@ metadata:
   name: ${{ values.name }}-crossplane-cluster
 
 resources:
-  - manifests/xeksclusters.yaml
+  - manifests/xclusterrbac.yaml
+  - manifests/xnetwork.yaml
+  - manifests/xekscluster.yaml
+  - manifests/xeksaccessentries.yaml
 
 labels:
 - includeSelectors: true

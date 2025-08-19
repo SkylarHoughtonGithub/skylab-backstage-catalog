@@ -49,24 +49,112 @@ spec:
           default: standard
           description: Type of cluster configuration to deploy
 
-    - title: Optional Settings
+    - title: AWS Configuration
       properties:
         region:
           title: AWS Region
           type: string
           default: us-east-2
+          enum:
+            - us-east-1
+            - us-east-2
+            - us-west-1
+            - us-west-2
+            - eu-west-1
+            - eu-central-1
+        awsAccountId:
+          title: AWS Account ID
+          type: string
+          description: AWS Account ID for IAM ARN construction
+          default: "635314249418"
+          pattern: "^[0-9]{12}$"
+
+    - title: Node Group Configuration
+      properties:
         nodeCount:
-          title: Node Count
+          title: Desired Node Count
           type: integer
           default: 1
           minimum: 1
           maximum: 10
+          description: Initial number of nodes in the node group
+        nodeMinSize:
+          title: Minimum Node Count
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 10
+          description: Minimum number of nodes for auto-scaling
+        nodeMaxSize:
+          title: Maximum Node Count
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 20
+          description: Maximum number of nodes for auto-scaling
         nodeSize:
           title: Node Instance Type
           type: string
           default: t3.medium
           enum:
+            - t3.small
             - t3.medium
+            - t3.large
+            - t3.xlarge
+            - m5.large
+            - m5.xlarge
+            - m5.2xlarge
+            - c5.large
+            - c5.xlarge
+            - c5.2xlarge
+          description: EC2 instance type for worker nodes
+        capacityType:
+          title: Node Capacity Type
+          type: string
+          enum:
+            - ON_DEMAND
+            - SPOT
+          default: ON_DEMAND
+          description: Capacity type for nodes (On-Demand or Spot instances)
+        diskSize:
+          title: Node Disk Size (GB)
+          type: integer
+          default: 20
+          minimum: 20
+          maximum: 100
+          description: EBS volume size for each node
+
+    - title: Cluster Access Configuration
+      properties:
+        endpointPrivateAccess:
+          title: Enable Private Endpoint Access
+          type: boolean
+          default: false
+          description: Enable private API server endpoint
+        endpointPublicAccess:
+          title: Enable Public Endpoint Access
+          type: boolean
+          default: true
+          description: Enable public API server endpoint
+
+    - title: EKS Add-ons Configuration
+      properties:
+        vpcCniEnabled:
+          title: Enable VPC CNI Add-on
+          type: boolean
+          default: true
+          description: Enable AWS VPC CNI add-on for networking
+        coreDnsEnabled:
+          title: Enable CoreDNS Add-on
+          type: boolean
+          default: true
+          description: Enable CoreDNS add-on for DNS resolution
+        kubeProxyEnabled:
+          title: Enable kube-proxy Add-on
+          type: boolean
+          default: true
+          description: Enable kube-proxy add-on for service networking
+
     - title: Admin Access Configuration
       description: Configure IAM principals that will have admin access to the EKS cluster
       properties:
@@ -88,6 +176,32 @@ spec:
           description: "Name of additional IAM user or role for admin access"
         adminAccessEntryType2:
           title: Secondary Admin Principal Type
+          type: string
+          enum:
+            - role
+            - user
+          default: role
+
+    - title: Developer Access Configuration
+      description: Configure IAM principals that will have namespace-scoped developer access
+      properties:
+        developerAccessEntryName1:
+          title: Primary Developer Principal Name (Optional)
+          type: string
+          description: "Name of IAM user or role for developer access"
+        developerAccessEntryType1:
+          title: Primary Developer Principal Type
+          type: string
+          enum:
+            - role
+            - user
+          default: role
+        developerAccessEntryName2:
+          title: Secondary Developer Principal Name (Optional)
+          type: string
+          description: "Name of additional IAM user or role for developer access"
+        developerAccessEntryType2:
+          title: Secondary Developer Principal Type
           type: string
           enum:
             - role
@@ -127,17 +241,40 @@ spec:
       input:
         url: ./templates/${{ parameters.clusterVariant }}
         values:
+          # Core configuration
           name: ${{ parameters.name }}
           environment: ${{ parameters.environment }}
           clusterType: ${{ parameters.clusterType }}
           clusterVariant: ${{ parameters.clusterVariant }}
           region: ${{ parameters.region }}
+          awsAccountId: ${{ parameters.awsAccountId }}
+          
+          # Node configuration
           nodeCount: ${{ parameters.nodeCount }}
+          nodeMinSize: ${{ parameters.nodeMinSize }}
+          nodeMaxSize: ${{ parameters.nodeMaxSize }}
           nodeSize: ${{ parameters.nodeSize }}
+          capacityType: ${{ parameters.capacityType }}
+          diskSize: ${{ parameters.diskSize }}
+          
+          # Endpoint configuration
+          endpointPrivateAccess: ${{ parameters.endpointPrivateAccess }}
+          endpointPublicAccess: ${{ parameters.endpointPublicAccess }}
+          
+          # Add-ons configuration
+          vpcCniEnabled: ${{ parameters.vpcCniEnabled }}
+          coreDnsEnabled: ${{ parameters.coreDnsEnabled }}
+          kubeProxyEnabled: ${{ parameters.kubeProxyEnabled }}
+          
+          # Access configuration
           adminAccessEntryName1: ${{ parameters.adminAccessEntryName1 }}
           adminAccessEntryType1: ${{ parameters.adminAccessEntryType1 }}
           adminAccessEntryName2: ${{ parameters.adminAccessEntryName2 }}
           adminAccessEntryType2: ${{ parameters.adminAccessEntryType2 }}
+          developerAccessEntryName1: ${{ parameters.developerAccessEntryName1 }}
+          developerAccessEntryType1: ${{ parameters.developerAccessEntryType1 }}
+          developerAccessEntryName2: ${{ parameters.developerAccessEntryName2 }}
+          developerAccessEntryType2: ${{ parameters.developerAccessEntryType2 }}
           readOnlyAccessEntryName1: ${{ parameters.readOnlyAccessEntryName1 }}
           readOnlyAccessEntryType1: ${{ parameters.readOnlyAccessEntryType1 }}
           readOnlyAccessEntryName2: ${{ parameters.readOnlyAccessEntryName2 }}
@@ -158,8 +295,26 @@ spec:
           - **Cluster Type**: ${{ parameters.clusterType }}
           - **Variant**: ${{ parameters.clusterVariant }}
           - **Region**: ${{ parameters.region }}
-          - **Node Count**: ${{ parameters.nodeCount }}
+          - **Node Count**: ${{ parameters.nodeCount }} (min: ${{ parameters.nodeMinSize }}, max: ${{ parameters.nodeMaxSize }})
           - **Node Size**: ${{ parameters.nodeSize }}
+          - **Capacity Type**: ${{ parameters.capacityType }}
+          
+          ### Access Configuration
+          {%- if parameters.adminAccessEntryName1 %}
+          - **Admin Access**: ${{ parameters.adminAccessEntryName1 }} (${{ parameters.adminAccessEntryType1 }})
+          {%- endif %}
+          {%- if parameters.developerAccessEntryName1 %}
+          - **Developer Access**: ${{ parameters.developerAccessEntryName1 }} (${{ parameters.developerAccessEntryType1 }})
+          {%- endif %}
+          {%- if parameters.readOnlyAccessEntryName1 %}
+          - **ReadOnly Access**: ${{ parameters.readOnlyAccessEntryName1 }} (${{ parameters.readOnlyAccessEntryType1 }})
+          {%- endif %}
+          
+          ### Components Created
+          - Network composition (VPC, subnets, security groups)
+          - RBAC composition (IAM roles and policies)
+          - EKS cluster composition (cluster, node group, add-ons)
+          - Access entries composition (IAM access entries)
           
           This PR adds new cluster infrastructure to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/`
           
@@ -188,6 +343,12 @@ spec:
           Pull Request: ${{ steps['publish-pr'].output.remoteUrl }}
           Cluster Path: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
           
+          Components Created:
+          - ${{ parameters.name }}-network (VPC, subnets, routing)
+          - ${{ parameters.name }}-rbac (IAM roles and policies)
+          - ${{ parameters.name }}-cluster (EKS cluster and node group)
+          - ${{ parameters.name }}-access (Access entries)
+          
           Next Steps:
           1. Review and merge the pull request
           2. Verify the cluster appears in your Backstage catalog
@@ -212,3 +373,5 @@ spec:
         content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}-infra
       - title: Expected Application Name
         content: cluster-name-crossplane-infra-${{ parameters.environment }}
+      - title: Components
+        content: Network, RBAC, Cluster, AccessEntries
