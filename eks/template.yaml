@@ -137,24 +137,6 @@ spec:
           default: true
           description: Enable public API server endpoint
 
-    - title: EKS Add-ons Configuration
-      properties:
-        vpcCniEnabled:
-          title: Enable VPC CNI Add-on
-          type: boolean
-          default: true
-          description: Enable AWS VPC CNI add-on for networking
-        coreDnsEnabled:
-          title: Enable CoreDNS Add-on
-          type: boolean
-          default: true
-          description: Enable CoreDNS add-on for DNS resolution
-        kubeProxyEnabled:
-          title: Enable kube-proxy Add-on
-          type: boolean
-          default: true
-          description: Enable kube-proxy add-on for service networking
-
     - title: Admin Access Configuration
       description: Configure IAM principals that will have admin access to the EKS cluster
       properties:
