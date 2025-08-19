@@ -58,17 +58,8 @@ spec:
   # EKS Add-ons
   addons:
     vpcCni:
-      enabled: ${{ values.vpcCniEnabled | default(true) }}
-      {%- if values.vpcCniVersion %}
       version: "${{ values.vpcCniVersion }}"
-      {%- endif %}
     coreDns:
-      enabled: ${{ values.coreDnsEnabled | default(true) }}
-      {%- if values.coreDnsVersion %}
       version: "${{ values.coreDnsVersion }}"
-      {%- endif %}
     kubeProxy:
-      enabled: ${{ values.kubeProxyEnabled | default(true) }}
-      {%- if values.kubeProxyVersion %}
       version: "${{ values.kubeProxyVersion }}"
-      {%- endif %}

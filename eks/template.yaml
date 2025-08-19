@@ -261,11 +261,6 @@ spec:
           endpointPrivateAccess: ${{ parameters.endpointPrivateAccess }}
           endpointPublicAccess: ${{ parameters.endpointPublicAccess }}
           
-          # Add-ons configuration
-          vpcCniEnabled: ${{ parameters.vpcCniEnabled }}
-          coreDnsEnabled: ${{ parameters.coreDnsEnabled }}
-          kubeProxyEnabled: ${{ parameters.kubeProxyEnabled }}
-          
           # Access configuration
           adminAccessEntryName1: ${{ parameters.adminAccessEntryName1 }}
           adminAccessEntryType1: ${{ parameters.adminAccessEntryType1 }}
