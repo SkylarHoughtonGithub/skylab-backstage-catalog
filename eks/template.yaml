@@ -171,27 +171,20 @@ spec:
       input:
         url: ./templates/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}
         values:
-          # Core configuration
           name: ${{ parameters.name }}
           environment: ${{ parameters.environment }}
           clusterType: ${{ parameters.clusterType }}
           clusterVariant: ${{ parameters.clusterVariant }}
           region: ${{ parameters.region }}
           awsAccountId: ${{ parameters.awsAccountId }}
-          
-          # Node configuration
           nodeCount: ${{ parameters.nodeCount }}
           nodeMinSize: ${{ parameters.nodeMinSize }}
           nodeMaxSize: ${{ parameters.nodeMaxSize }}
           nodeSize: ${{ parameters.nodeSize }}
           capacityType: ${{ parameters.capacityType }}
           diskSize: ${{ parameters.diskSize }}
-          
-          # Endpoint configuration
           endpointPrivateAccess: ${{ parameters.endpointPrivateAccess }}
           endpointPublicAccess: ${{ parameters.endpointPublicAccess }}
-          
-          # Access configuration (simplified)
           adminAccessEntryName1: ${{ parameters.adminAccessEntryName1 }}
           adminAccessEntryType1: ${{ parameters.adminAccessEntryType1 }}
           readOnlyAccessEntryName1: ${{ parameters.readOnlyAccessEntryName1 }}
@@ -202,7 +195,7 @@ spec:
       action: publish:github:pull-request
       input:
         repoUrl: github.com?owner=SkylarHoughtonGithub&repo=skylab-backstage-configs
-        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}-infra
+        branchName: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.clusterVariant }}-${{ parameters.name }}-infra
         title: 'Add ${{ parameters.clusterVariant }} EKS cluster: ${{ parameters.name }}'
         description: |
           ## New EKS Cluster Infrastructure
@@ -235,10 +228,10 @@ spec:
           - **ReadOnly access composition** (readonly access entry + policy association)
           {%- endif %}
           
-          This PR adds new modular cluster infrastructure to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/`
+          This PR adds new modular cluster infrastructure to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}/${{ parameters.name }}/infra/crossplane/`
           
           The cluster will be managed by Crossplane and deployed via ArgoCD ApplicationSet.
-        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
+        targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}/${{ parameters.name }}/infra/crossplane
 
     - id: wait-for-merge
       name: Wait for PR to be merged
@@ -250,7 +243,7 @@ spec:
       name: Register in Catalog
       action: catalog:register
       input:
-        catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/catalog-info.yaml
+        catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}/${{ parameters.name }}/infra/crossplane/catalog-info.yaml
 
     - id: completion-message
       name: Cluster Creation Complete
