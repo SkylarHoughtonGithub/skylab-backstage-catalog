@@ -124,7 +124,7 @@ spec:
           maximum: 100
           description: EBS volume size for each node
 
-    - title: Cluster Access Configuration
+    - title: Access Configuration
       properties:
         endpointPrivateAccess:
           title: Enable Private Endpoint Access
@@ -136,10 +136,6 @@ spec:
           type: boolean
           default: true
           description: Enable public API server endpoint
-
-    - title: Admin Access Configuration
-      description: Configure IAM principals that will have admin access to the EKS cluster
-      properties:
         adminAccessEntryName1:
           title: Primary Admin Principal Name
           type: string
@@ -163,10 +159,6 @@ spec:
             - role
             - user
           default: role
-
-    - title: Developer Access Configuration
-      description: Configure IAM principals that will have namespace-scoped developer access
-      properties:
         developerAccessEntryName1:
           title: Primary Developer Principal Name (Optional)
           type: string
@@ -189,10 +181,6 @@ spec:
             - role
             - user
           default: role
-          
-    - title: Read-Only Access Configuration
-      description: Configure IAM principals that will have read-only access to the EKS cluster
-      properties:
         readOnlyAccessEntryName1:
           title: Primary Read-Only Principal Name (Optional)
           type: string
