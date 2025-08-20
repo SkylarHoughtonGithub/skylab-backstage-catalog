@@ -3,10 +3,10 @@ apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
   name: ${{ values.name }}-${{ values.clusterType }}-cluster
-  title: ${{ values.name | title }} EKS Cluster (Crossplane)
+  title: ${{ values.name | title }} EKS Cluster
   description: ${{ values.clusterVariant | title }} EKS cluster for ${{ values.environment }} environment managed by Crossplane
   annotations:
-    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
     backstage.io/techdocs-ref: dir:.
     argocd/app-name: skylab-cluster-2-crossplane-infra-${{ values.environment }}
     crossplane.io/composite-resource: ${{ values.name }}-eks-cluster
@@ -25,13 +25,13 @@ metadata:
     layer: infra
     component: crossplane
   links:
-    - url: https://console.aws.amazon.com/eks/home?region=${{ values.region }}#/clusters/${{ values.name }}
+    - url: https://console.aws.amazon.com/eks/home?region=${{ values.region }}#/clusters/${{ values.name }}-${{ values.environment }}
       title: AWS EKS Console
       icon: cloud
     - url: https://argocd.skylarhoughtongithub.local/applications?search=${{ values.name }}-crossplane-infra-${{ values.environment }}
       title: ArgoCD Applications
       icon: dashboard
-    - url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/tree/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane
+    - url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/tree/main/${{ values.environment }}/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}/${{ values.name }}/infra/crossplane
       title: Source Code
       icon: github
 spec:
