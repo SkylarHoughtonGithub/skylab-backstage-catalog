@@ -31,12 +31,14 @@ spec:
             - dev
             - staging
             - prod
+          default: dev
           description: Target environment for the cluster
         clusterType:
           title: Cluster Type
           type: string
           enum:
             - eks
+          default: eks
           description: Kubernetes platform type
         clusterVariant:
           title: Cluster Variant
@@ -167,7 +169,7 @@ spec:
       name: Fetch Cluster Template
       action: fetch:template
       input:
-        url: ./templates/${{ parameters.clusterVariant }}/${{ parameters.clusterType }}
+        url: ./templates/${{ parameters.clusterType }}/${{ parameters.clusterVariant }}
         values:
           # Core configuration
           name: ${{ parameters.name }}
