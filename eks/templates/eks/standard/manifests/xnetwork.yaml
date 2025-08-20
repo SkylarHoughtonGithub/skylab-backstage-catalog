@@ -12,7 +12,7 @@ metadata:
     template: eks-cluster-crossplane
     component: network
   annotations:
-    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/${{ values.environment }}/${{ values.clusterType }}/${{ values.clusterVariant }}/${{ values.name }}/infra/crossplane/catalog-info.yaml
     template.backstage.io/created-by: ${{ values.name }}-eks-cluster-template
 spec:
   networkName: ${{ values.name }}-${{ values.environment }}
