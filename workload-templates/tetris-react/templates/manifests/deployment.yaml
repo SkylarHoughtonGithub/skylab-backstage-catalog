@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ values.name }}-deployment
+  namespace: ${{ values.name }}-${{ values.environment }}
+  labels:
+    app: ${{ values.name }}
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/apps/${{ values.environment }}/${{ values.name }}/catalog-info.yaml
+    template.backstage.io/created-by: ${{ values.name }}-tetris-template
+spec:
+  replicas: ${{ values.replicas }}
+  selector:
+    matchLabels:
+      app: ${{ values.name }}
+      environment: ${{ values.environment }}
+  template:
+    metadata:
+      labels:
+        app: ${{ values.name }}
+        environment: ${{ values.environment }}
+        cluster: ${{ values.targetCluster }}
+    spec:
+      containers:
+      - name: ${{ values.name }}
+        image: ${{ values.image }}
+        ports:
+        - containerPort: ${{ values.containerPort }}
+          name: http
+          protocol: TCP
+        {%- if values.enableHealthChecks %}
+        readinessProbe:
+          httpGet:
+            path: ${{ values.healthCheckPath }}
+            port: ${{ values.containerPort }}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: ${{ values.healthCheckPath }}
+            port: ${{ values.containerPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        {%- endif %}
+        resources:
+          requests:
+            cpu: ${{ values.cpuRequest }}
+            memory: ${{ values.memoryRequest }}
+          limits:
+            cpu: ${{ values.cpuLimit }}
+            memory: ${{ values.memoryLimit }}
+        env:
+        - name: PORT
+          value: "${{ values.containerPort }}"
+        - name: NODE_ENV
+          value: "${{ values.environment }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL

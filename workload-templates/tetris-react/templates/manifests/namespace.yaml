@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${{ values.name }}-${{ values.environment }}
+  labels:
+    app: ${{ values.name }}
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+    managed-by: backstage-template

@@ -1,0 +1,39 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: ${{ values.name }}-${{ values.environment }}
+
+resources:
+  - ./manifests/namespace.yaml
+  - ./manifests/deployment.yaml
+  - ./manifests/service.yaml
+  {%- if values.enableIngress %}
+  - ./manifests/ingress.yaml
+  {%- endif %}
+
+labels:
+- includeSelectors: true
+  pairs:
+    app: ${{ values.name }}
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+    managed-by: backstage-template
+    component: ${{ values.name }}-game
+
+namespace: ${{ values.name }}-${{ values.environment }}
+
+commonLabels:
+  app: ${{ values.name }}
+  environment: ${{ values.environment }}
+  version: v1
+
+patches:
+  - target:
+      kind: Deployment
+      name: ${{ values.name }}-deployment
+    patch: |-
+      - op: add
+        path: /metadata/labels/backstage.io~1managed-by
+        value: template

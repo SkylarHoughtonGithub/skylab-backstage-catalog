@@ -1,0 +1,13 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: ${{ values.name }}-entities
+  description: ${{ values.name | title }} game entities
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/apps/${{ values.environment }}/${{ values.name }}/catalog-info.yaml
+spec:
+  targets:
+    - ./component.yaml
+    - ./api.yaml
+    - ./resource.yaml

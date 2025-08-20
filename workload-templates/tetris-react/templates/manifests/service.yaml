@@ -1,0 +1,23 @@
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ values.name }}-service
+  namespace: ${{ values.name }}-${{ values.environment }}
+  labels:
+    app: ${{ values.name }}
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/apps/${{ values.environment }}/${{ values.name }}/catalog-info.yaml
+spec:
+  type: ${{ values.serviceType }}
+  ports:
+  - port: 80
+    targetPort: ${{ values.containerPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: ${{ values.name }}
+    environment: ${{ values.environment }}

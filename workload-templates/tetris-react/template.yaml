@@ -1,0 +1,217 @@
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: tetris-app-deployment
+  title: Tetris Game Application
+  description: Deploy a Tetris game application to a Kubernetes cluster
+  tags:
+    - tetris
+    - game
+    - react
+    - kubernetes
+    - web-app
+spec:
+  owner: platform-team
+  type: application
+  parameters:
+    - title: Application Configuration
+      required:
+        - name
+        - environment
+        - targetCluster
+      properties:
+        name:
+          title: Application Name
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          description: Name for your Tetris application (lowercase, numbers, hyphens only)
+          default: tetris
+        environment:
+          title: Environment
+          type: string
+          enum:
+            - dev
+            - staging
+            - prod
+          default: dev
+          description: Target environment for the application
+        targetCluster:
+          title: Target Cluster
+          type: string
+          description: Name of the EKS cluster to deploy to
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Resource
+              spec.type: kubernetes-cluster
+
+    - title: Container Configuration
+      properties:
+        image:
+          title: Container Image
+          type: string
+          default: avian19/tetrisv1:latest
+          description: Docker image to deploy
+        replicas:
+          title: Replica Count
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 5
+          description: Number of application replicas
+        containerPort:
+          title: Container Port
+          type: integer
+          default: 3000
+          description: Port that the application listens on
+
+    - title: Resource Configuration
+      properties:
+        cpuRequest:
+          title: CPU Request
+          type: string
+          default: 100m
+          description: CPU request for the container
+        cpuLimit:
+          title: CPU Limit
+          type: string
+          default: 500m
+          description: CPU limit for the container
+        memoryRequest:
+          title: Memory Request
+          type: string
+          default: 128Mi
+          description: Memory request for the container
+        memoryLimit:
+          title: Memory Limit
+          type: string
+          default: 512Mi
+          description: Memory limit for the container
+
+    - title: Network Configuration
+      properties:
+        subdomain:
+          title: Subdomain
+          type: string
+          description: Subdomain for the application (will be {subdomain}.skylarhoughtongithub.local)
+          pattern: '^[a-z0-9-]+$'
+        enableIngress:
+          title: Enable External Access
+          type: boolean
+          default: true
+          description: Create ingress for external access
+        serviceType:
+          title: Service Type
+          type: string
+          enum:
+            - ClusterIP
+            - NodePort
+            - LoadBalancer
+          default: ClusterIP
+          description: Kubernetes service type
+
+    - title: Health Checks
+      properties:
+        enableHealthChecks:
+          title: Enable Health Checks
+          type: boolean
+          default: true
+          description: Add readiness and liveness probes
+        healthCheckPath:
+          title: Health Check Path
+          type: string
+          default: /
+          description: HTTP path for health checks
+
+  steps:
+    - id: fetch-template
+      name: Fetch Application Template
+      action: fetch:template
+      input:
+        url: ./templates/tetris-app
+        values:
+          name: ${{ parameters.name }}
+          environment: ${{ parameters.environment }}
+          targetCluster: ${{ parameters.targetCluster }}
+          image: ${{ parameters.image }}
+          replicas: ${{ parameters.replicas }}
+          containerPort: ${{ parameters.containerPort }}
+          cpuRequest: ${{ parameters.cpuRequest }}
+          cpuLimit: ${{ parameters.cpuLimit }}
+          memoryRequest: ${{ parameters.memoryRequest }}
+          memoryLimit: ${{ parameters.memoryLimit }}
+          subdomain: ${{ parameters.subdomain }}
+          enableIngress: ${{ parameters.enableIngress }}
+          serviceType: ${{ parameters.serviceType }}
+          enableHealthChecks: ${{ parameters.enableHealthChecks }}
+          healthCheckPath: ${{ parameters.healthCheckPath }}
+
+    - id: publish-pr
+      name: Create Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=SkylarHoughtonGithub&repo=skylab-backstage-configs
+        branchName: add-${{ parameters.environment }}-${{ parameters.name }}-app
+        title: 'Add ${{ parameters.name }} application to ${{ parameters.environment }}'
+        description: |
+          ## New Tetris Application Deployment
+          
+          - **Application Name**: ${{ parameters.name }}
+          - **Environment**: ${{ parameters.environment }}
+          - **Target Cluster**: ${{ parameters.targetCluster }}
+          - **Image**: ${{ parameters.image }}
+          - **Replicas**: ${{ parameters.replicas }}
+          - **Resources**: ${{ parameters.cpuRequest }}/${{ parameters.cpuLimit }} CPU, ${{ parameters.memoryRequest }}/${{ parameters.memoryLimit }} Memory
+          {%- if parameters.enableIngress and parameters.subdomain %}
+          - **External URL**: https://${{ parameters.subdomain }}.skylarhoughtongithub.local
+          {%- endif %}
+          
+          ### Components Created
+          - **Namespace**: ${{ parameters.name }}-${{ parameters.environment }}
+          - **Deployment**: ${{ parameters.name }}-deployment
+          - **Service**: ${{ parameters.name }}-service
+          {%- if parameters.enableIngress %}
+          - **Ingress**: ${{ parameters.name }}-ingress
+          {%- endif %}
+          
+          This PR adds the application manifests to `apps/${{ parameters.environment }}/${{ parameters.name }}/`
+          
+          The application will be deployed via ArgoCD ApplicationSet to the **${{ parameters.targetCluster }}** cluster.
+        targetPath: apps/${{ parameters.environment }}/${{ parameters.name }}
+
+    - id: wait-for-merge
+      name: Wait for PR to be merged
+      action: debug:wait
+      input:
+        seconds: 15
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        catalogInfoUrl: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/apps/${{ parameters.environment }}/${{ parameters.name }}/catalog-info.yaml
+
+    - id: completion-message
+      name: Application Deployment Complete
+      action: debug:log
+      input:
+        message: |
+          Tetris Application Deployment Created Successfully!
+          
+          - Check ArgoCD for deployment status
+          - Application will be available once synced
+          {%- if parameters.enableIngress and parameters.subdomain %}
+          - Access URL: https://${{ parameters.subdomain }}.skylarhoughtongithub.local
+          {%- endif %}
+
+  output:
+    links:
+      - title: Repository
+        url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/tree/main/apps/${{ parameters.environment }}/${{ parameters.name }}
+      - title: ArgoCD Application
+        url: https://argocd.skylarhoughtongithub.local/applications?search=${{ parameters.name }}-${{ parameters.environment }}
+      {%- if parameters.enableIngress and parameters.subdomain %}
+      - title: Application URL
+        url: https://${{ parameters.subdomain }}.skylarhoughtongithub.local
+      {%- endif %}

@@ -1,0 +1,39 @@
+
+{%- if values.enableIngress %}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${{ values.name }}-ingress
+  namespace: ${{ values.name }}-${{ values.environment }}
+  labels:
+    app: ${{ values.name }}
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/apps/${{ values.environment }}/${{ values.name }}/catalog-info.yaml
+    {%- if values.environment == 'prod' %}
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {%- endif %}
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  {%- if values.environment == 'prod' %}
+  tls:
+  - hosts:
+    - ${{ values.subdomain }}.skylarhoughtongithub.local
+    secretName: ${{ values.name }}-tls
+  {%- endif %}
+  rules:
+  - host: ${{ values.subdomain | default(values.name) }}.skylarhoughtongithub.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${{ values.name }}-service
+            port:
+              number: 80
+{%- endif %}

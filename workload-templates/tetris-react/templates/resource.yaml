@@ -1,0 +1,19 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.name }}-k8s-resources
+  title: ${{ values.name | title }} Kubernetes Resources
+  description: K8s deployment, service, and ingress for ${{ values.name | title }} app
+  annotations:
+    backstage.io/kubernetes-namespace: ${{ values.name }}-${{ values.environment }}
+    backstage.io/kubernetes-id: ${{ values.name }}
+  labels:
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+spec:
+  type: kubernetes-app
+  lifecycle: ${{ values.environment }}
+  owner: platform-team
+  dependsOn:
+    - resource:${{ values.targetCluster }}-eks-cluster

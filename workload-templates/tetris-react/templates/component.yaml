@@ -1,0 +1,45 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  title: ${{ values.name | title }} Game
+  description: A classic Tetris game using ${{ values.image }} Docker image
+  annotations:
+    argocd/app-name: ${{ values.name }}-${{ values.environment }}
+    backstage.io/source-location: url:https://github.com/SkylarHoughtonGithub/skylab-backstage-configs/blob/main/apps/${{ values.environment }}/${{ values.name }}
+    backstage.io/kubernetes-id: ${{ values.name }}
+    backstage.io/kubernetes-namespace: ${{ values.name }}-${{ values.environment }}
+    github.com/project-slug: "SkylarHoughtonGithub/skylab-backstage-configs"
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - game
+    - react
+    - web
+    - ${{ values.environment }}
+  labels:
+    environment: ${{ values.environment }}
+    cluster: ${{ values.targetCluster }}
+    app-type: web-game
+    managed-by: backstage-template
+  links:
+    {%- if values.enableIngress and values.subdomain %}
+    - url: https://${{ values.subdomain }}.skylarhoughtongithub.local
+      title: Play ${{ values.name | title }}
+      icon: web
+    {%- endif %}
+    - url: https://hub.docker.com/r/${{ values.image.split(':')[0] }}
+      title: Docker Image
+      icon: docker
+    - url: https://argocd.skylarhoughtongithub.local/applications?search=${{ values.name }}-${{ values.environment }}
+      title: ArgoCD Application
+      icon: dashboard
+spec:
+  type: website
+  lifecycle: ${{ values.environment }}
+  owner: platform-team
+  providesApis:
+    - ${{ values.name }}-web-interface
+  dependsOn:
+    - resource:${{ values.name }}-k8s-resources
+    - resource:${{ values.targetCluster }}-eks-cluster

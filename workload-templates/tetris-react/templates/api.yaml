@@ -1,0 +1,30 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.name }}-web-interface
+  title: ${{ values.name | title }} Web Interface
+  description: HTTP web interface for the ${{ values.name | title }} game
+spec:
+  type: website
+  lifecycle: ${{ values.environment }}
+  owner: platform-team
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: ${{ values.name | title }} Game Web Interface
+      version: 1.0.0
+      description: Browser-based ${{ values.name | title }} game
+    servers:
+      {%- if values.enableIngress and values.subdomain %}
+      - url: https://${{ values.subdomain }}.skylarhoughtongithub.local
+      {%- else %}
+      - url: http://${{ values.name }}-service.${{ values.name }}-${{ values.environment }}.svc.cluster.local
+      {%- endif %}
+    paths:
+      /:
+        get:
+          summary: ${{ values.name | title }} game homepage
+          responses:
+            '200':
+              description: Game interface loads successfully

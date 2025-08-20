@@ -1,0 +1,17 @@
+---
+site_name: '${{ values.name | title }} Game Documentation'
+site_description: 'Documentation for the ${{ values.name | title }} application deployed on ${{ values.targetCluster }} cluster'
+
+nav:
+  - Home: index.md
+  - Deployment Guide: deployment.md
+  - Troubleshooting: troubleshooting.md
+
+plugins:
+  - techdocs-core
+
+theme:
+  name: material
+  palette:
+    primary: green
+    accent: black
