@@ -46,7 +46,7 @@ spec:
     instanceTypes: 
       - ${{ values.nodeSize | default('t3.medium') }}
     capacityType: ${{ values.capacityType | default('ON_DEMAND') }}
-    amiType: ${{ values.amiType | default('AL2_x86_64') }}
+    amiType: ${{ values.amiType | default('AL2023_x86_64_STANDARD') }}
     diskSize: ${{ values.diskSize | default(20) }}
     {%- if values.nodeLabels %}
     labels:
