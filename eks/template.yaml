@@ -137,72 +137,30 @@ spec:
           default: true
           description: Enable public API server endpoint
         adminAccessEntryName1:
-          title: Primary Admin Principal Name
+          title: Admin Principal Name (Optional)
           type: string
-          description: "Name of IAM user or role (e.g., 'MyAdminRole' or 'john.doe')"
+          description: "Name of IAM user or role for full admin access"
           default: chicken
         adminAccessEntryType1:
-          title: Primary Admin Principal Type
+          title: Admin Principal Type
           type: string
           enum:
             - role
             - user
           default: user
-        adminAccessEntryName2:
-          title: Secondary Admin Principal Name (Optional)
-          type: string
-          description: "Name of additional IAM user or role for admin access"
-        adminAccessEntryType2:
-          title: Secondary Admin Principal Type
-          type: string
-          enum:
-            - role
-            - user
-          default: role
-        developerAccessEntryName1:
-          title: Primary Developer Principal Name (Optional)
-          type: string
-          description: "Name of IAM user or role for developer access"
-        developerAccessEntryType1:
-          title: Primary Developer Principal Type
-          type: string
-          enum:
-            - role
-            - user
-          default: role
-        developerAccessEntryName2:
-          title: Secondary Developer Principal Name (Optional)
-          type: string
-          description: "Name of additional IAM user or role for developer access"
-        developerAccessEntryType2:
-          title: Secondary Developer Principal Type
-          type: string
-          enum:
-            - role
-            - user
-          default: role
+          description: "Type of admin principal"
         readOnlyAccessEntryName1:
-          title: Primary Read-Only Principal Name (Optional)
+          title: ReadOnly Principal Name (Optional)
           type: string
           description: "Name of IAM user or role for read-only access"
         readOnlyAccessEntryType1:
-          title: Primary Read-Only Principal Type
+          title: ReadOnly Principal Type
           type: string
           enum:
             - role
             - user
           default: role
-        readOnlyAccessEntryName2:
-          title: Secondary Read-Only Principal Name (Optional)
-          type: string
-          description: "Name of additional IAM user or role for read-only access"
-        readOnlyAccessEntryType2:
-          title: Secondary Read-Only Principal Type
-          type: string
-          enum:
-            - role
-            - user
-          default: role
+          description: "Type of readonly principal"
 
   steps:
     - id: fetch-cluster-template
@@ -231,19 +189,11 @@ spec:
           endpointPrivateAccess: ${{ parameters.endpointPrivateAccess }}
           endpointPublicAccess: ${{ parameters.endpointPublicAccess }}
           
-          # Access configuration
+          # Access configuration (simplified)
           adminAccessEntryName1: ${{ parameters.adminAccessEntryName1 }}
           adminAccessEntryType1: ${{ parameters.adminAccessEntryType1 }}
-          adminAccessEntryName2: ${{ parameters.adminAccessEntryName2 }}
-          adminAccessEntryType2: ${{ parameters.adminAccessEntryType2 }}
-          developerAccessEntryName1: ${{ parameters.developerAccessEntryName1 }}
-          developerAccessEntryType1: ${{ parameters.developerAccessEntryType1 }}
-          developerAccessEntryName2: ${{ parameters.developerAccessEntryName2 }}
-          developerAccessEntryType2: ${{ parameters.developerAccessEntryType2 }}
           readOnlyAccessEntryName1: ${{ parameters.readOnlyAccessEntryName1 }}
           readOnlyAccessEntryType1: ${{ parameters.readOnlyAccessEntryType1 }}
-          readOnlyAccessEntryName2: ${{ parameters.readOnlyAccessEntryName2 }}
-          readOnlyAccessEntryType2: ${{ parameters.readOnlyAccessEntryType2 }}
 
     - id: publish-pr
       name: Create Pull Request
@@ -266,22 +216,24 @@ spec:
           
           ### Access Configuration
           {%- if parameters.adminAccessEntryName1 %}
-          - **Admin Access**: ${{ parameters.adminAccessEntryName1 }} (${{ parameters.adminAccessEntryType1 }})
-          {%- endif %}
-          {%- if parameters.developerAccessEntryName1 %}
-          - **Developer Access**: ${{ parameters.developerAccessEntryName1 }} (${{ parameters.developerAccessEntryType1 }})
+          - **Admin Access**: ${{ parameters.adminAccessEntryName1 }} (${{ parameters.adminAccessEntryType1 }}) - AmazonEKSClusterAdminPolicy
           {%- endif %}
           {%- if parameters.readOnlyAccessEntryName1 %}
-          - **ReadOnly Access**: ${{ parameters.readOnlyAccessEntryName1 }} (${{ parameters.readOnlyAccessEntryType1 }})
+          - **ReadOnly Access**: ${{ parameters.readOnlyAccessEntryName1 }} (${{ parameters.readOnlyAccessEntryType1 }}) - AmazonEKSAdminViewPolicy
           {%- endif %}
           
           ### Components Created
-          - Network composition (VPC, subnets, security groups)
-          - RBAC composition (IAM roles and policies)
-          - EKS cluster composition (cluster, node group, add-ons)
-          - Access entries composition (IAM access entries)
+          - **Network composition** (VPC, subnets, security groups, routing)
+          - **RBAC composition** (IAM roles and policies for EKS)
+          - **EKS cluster composition** (cluster, node group, add-ons)
+          {%- if parameters.adminAccessEntryName1 %}
+          - **Admin access composition** (admin access entry + policy association)
+          {%- endif %}
+          {%- if parameters.readOnlyAccessEntryName1 %}
+          - **ReadOnly access composition** (readonly access entry + policy association)
+          {%- endif %}
           
-          This PR adds new cluster infrastructure to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/`
+          This PR adds new modular cluster infrastructure to `${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane/`
           
           The cluster will be managed by Crossplane and deployed via ArgoCD ApplicationSet.
         targetPath: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
@@ -303,40 +255,4 @@ spec:
       action: debug:log
       input:
         message: |
-          EKS Cluster Infrastructure Created!
-          
-          Pull Request: ${{ steps['publish-pr'].output.remoteUrl }}
-          Cluster Path: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
-          
-          Components Created:
-          - ${{ parameters.name }}-network (VPC, subnets, routing)
-          - ${{ parameters.name }}-rbac (IAM roles and policies)
-          - ${{ parameters.name }}-cluster (EKS cluster and node group)
-          - ${{ parameters.name }}-access (Access entries)
-          
-          Next Steps:
-          1. Review and merge the pull request
-          2. Verify the cluster appears in your Backstage catalog
-          3. Monitor ArgoCD for sync status
-          4. Check Crossplane for cluster provisioning status
-
-  output:
-    links:
-      - title: Pull Request
-        url: ${{ steps['publish-pr'].output.remoteUrl }}
-        icon: github
-      - title: Repository
-        url: https://github.com/SkylarHoughtonGithub/skylab-backstage-configs
-        icon: catalog
-      - title: ArgoCD 
-        url: https://argocd.skylarhoughtongithub.local
-        icon: dashboard
-    text:
-      - title: Cluster Path
-        content: ${{ parameters.environment }}/${{ parameters.clusterType }}/${{ parameters.name }}/infra/crossplane
-      - title: Branch Name
-        content: add-${{ parameters.environment }}-${{ parameters.clusterType }}-${{ parameters.name }}-infra
-      - title: Expected Application Name
-        content: cluster-name-crossplane-infra-${{ parameters.environment }}
-      - title: Components
-        content: Network, RBAC, Cluster, AccessEntries
+          EKS Cluster Infrastructure Create
