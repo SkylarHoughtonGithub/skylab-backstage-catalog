@@ -24,7 +24,6 @@ spec:
     type: ${{ values.adminAccessEntryType1 | default('role') }}
 {%- endif %}
 
-# ReadOnly Access Entry Composition (Optional)
 {%- if values.readOnlyAccessEntryName1 %}
 ---
 apiVersion: infrastructure.skylab.com/v1alpha1

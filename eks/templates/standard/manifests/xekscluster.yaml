@@ -22,11 +22,9 @@ spec:
   clusterType: ${{ values.clusterVariant }}
   kubernetesVersion: "1.33"
   
-  # References to other compositions
   networkName: ${{ values.name }}-${{ values.environment }}
   rbacName: ${{ values.name }}-${{ values.environment }}
   
-  # Endpoint access configuration
   endpointAccess:
     private: ${{ values.endpointPrivateAccess | default(false) }}
     public: ${{ values.endpointPublicAccess | default(true) }}
@@ -38,7 +36,6 @@ spec:
     publicAccessCidrs: ["68.52.182.6/32"]
     {%- endif %}
   
-  # Node group configuration
   nodeGroup:
     desiredSize: ${{ values.nodeCount | default(1) }}
     minSize: ${{ values.nodeMinSize | default(1) }}
