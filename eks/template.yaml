@@ -167,7 +167,7 @@ spec:
       name: Fetch Cluster Template
       action: fetch:template
       input:
-        url: ./templates/${{ parameters.clusterVariant }}
+        url: ./templates/${{ parameters.clusterVariant }}/${{ parameters.clusterType }}
         values:
           # Core configuration
           name: ${{ parameters.name }}
